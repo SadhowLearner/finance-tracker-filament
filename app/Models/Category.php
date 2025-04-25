@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
+    protected $fillable = [
+        'name',
+        'type',
+        'notes',
+    ];
     /**
      * Get all of the transaction for the Category
      *

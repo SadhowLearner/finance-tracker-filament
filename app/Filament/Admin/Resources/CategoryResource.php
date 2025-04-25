@@ -23,7 +23,18 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Forms\Components\TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'income' => 'Income',
+                        'expense' => 'Expense',
+                    ])
+                    ->required(),
+                Forms\Components\Textarea::make('notes')
+                    ->maxLength(65535)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -31,10 +42,27 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('notes')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('type')
+                    ->options([
+                        'income' => 'Income',
+                        'expense' => 'Expense',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

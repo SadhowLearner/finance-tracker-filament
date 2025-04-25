@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Source extends Model
 {
+    protected $fillable = [
+        'name',
+        'notes',
+    ];
     /**
      * Get all of the transaction for the Source
      *

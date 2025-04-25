@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    protected $fillable = [
+        'amount',
+        'date',
+        'notes',
+        'category_id',
+        'source_id',
+        'type',
+        'description',
+        'attachment',
+    ];
     /**
      * Get the category that owns the Transaction
      *

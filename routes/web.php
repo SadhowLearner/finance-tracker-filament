@@ -1,10 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Redirect;
 
 Route::get('/', function () {
-    return view('welcome');
+    // return view('welcome');
+    return Redirect::to('/admin/login');
 })->name('home');
 
 Route::view('dashboard', 'dashboard')
@@ -19,4 +21,4 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

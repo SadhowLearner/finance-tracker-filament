@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Support\RawJs;
+use App\Models\Category;
 
 class TransactionResource extends Resource
 {
@@ -23,7 +25,44 @@ class TransactionResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Forms\Components\DatePicker::make('date')
+                    ->required(),
+                Forms\Components\TextInput::make('description')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('amount')
+                    ->required()
+                    ->numeric()
+                    ->prefix('IDR'),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'income' => 'Income',
+                        'expense' => 'Expense',
+                    ])
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn(callable $set) => $set('category_id', null)),
+                Forms\Components\Select::make('category_id')
+                    ->label('Category')
+                    ->options(
+                        fn($get) =>
+                        Category::query()
+                            ->when($get('type'), fn($query, $type) => $query->where('type', $type))
+                            ->pluck('name', 'id')
+                    )
+                    ->required()
+                    ->searchable()
+                    ->placeholder('Select type first')
+                    ->disabled(fn($get) => !$get('type'))
+                    ->reactive(),
+                Forms\Components\Select::make('source_id')
+                    ->relationship('source', 'name')
+                    ->required(),
+                Forms\Components\FileUpload::make('attachment')
+                    ->directory('attachments')
+                    ->disk('public')
+                    ->columnSpanFull()
+                    ->downloadable(),
             ]);
     }
 
@@ -31,13 +70,46 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('amount')
+                    ->numeric()
+                    ->sortable()
+                    ->money('IDR'),
+                Tables\Columns\TextColumn::make('date')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('source.name')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('type')
+                    ->options([
+                        'income' => 'Income',
+                        'expense' => 'Expense',
+                    ]),
+                Tables\Filters\SelectFilter::make('category')
+                    ->relationship('category', 'name'),
+                Tables\Filters\SelectFilter::make('source')
+                    ->relationship('source', 'name'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

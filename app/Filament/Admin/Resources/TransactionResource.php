@@ -2,18 +2,21 @@
 
 namespace App\Filament\Admin\Resources;
 
+use Filament\Forms;
+use Filament\Tables;
+use App\Models\Source;
+use App\Models\Category;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use App\Models\Transaction;
+use Filament\Support\RawJs;
+use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Admin\Resources\SourceResource;
+use App\Filament\Admin\Resources\CategoryResource;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\TransactionResource\Pages;
 use App\Filament\Admin\Resources\TransactionResource\RelationManagers;
-use App\Models\Transaction;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Support\RawJs;
-use App\Models\Category;
 
 class TransactionResource extends Resource
 {
@@ -39,6 +42,7 @@ class TransactionResource extends Resource
                         'income' => 'Income',
                         'expense' => 'Expense',
                     ])
+                    ->native(false)
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn(callable $set) => $set('category_id', null)),
@@ -50,14 +54,39 @@ class TransactionResource extends Resource
                             ->when($get('type'), fn($query, $type) => $query->where('type', $type))
                             ->pluck('name', 'id')
                     )
+                    ->createOptionForm(
+                        function (callable $get): array {
+                            $newForm = CategoryResource::getForm();
+                            $newForm[1] =
+                                Forms\Components\Hidden::make('type')
+                                ->default($get('type'));
+
+                            return $newForm;
+                        }
+                    )
+                    ->createOptionUsing(function (array $data): Int {
+                        return Category::create($data)->getKey();
+                    })
                     ->required()
                     ->searchable()
                     ->placeholder('Select type first')
                     ->disabled(fn($get) => !$get('type'))
                     ->reactive(),
                 Forms\Components\Select::make('source_id')
-                    ->relationship('source', 'name')
-                    ->required(),
+                    ->label('Source')
+                    ->options(
+                        Source::pluck('name', 'id')
+                    )
+                    ->createOptionForm(SourceResource::getForm())
+                    ->createOptionUsing(function (array $data): Int {
+                        return Source::create($data)->getKey();
+                    })
+                    ->required()
+                    ->searchable()
+                    ->reactive(),
+                // Forms\Components\Select::make('source_id')
+                //     ->relationship('source', 'name')
+                //     ->required(),
                 Forms\Components\FileUpload::make('attachment')
                     ->directory('attachments')
                     ->disk('public')

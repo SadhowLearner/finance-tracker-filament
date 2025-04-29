@@ -19,23 +19,28 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
+    public static function getForm(): array
+    {
+        return [
+            Forms\Components\TextInput::make('name')
+                ->required()
+                ->maxLength(255),
+            Forms\Components\Select::make('type')
+                ->options([
+                    'income' => 'Income',
+                    'expense' => 'Expense',
+                ])
+                ->required(),
+            Forms\Components\Textarea::make('notes')
+                ->maxLength(65535)
+                ->columnSpanFull(),
+        ];
+    }
+
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('type')
-                    ->options([
-                        'income' => 'Income',
-                        'expense' => 'Expense',
-                    ])
-                    ->required(),
-                Forms\Components\Textarea::make('notes')
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-            ]);
+            ->schema(self::getForm());
     }
 
     public static function table(Table $table): Table

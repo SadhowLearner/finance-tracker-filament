@@ -19,17 +19,22 @@ class SourceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-globe-alt';
 
+    public static function getForm(): array
+    {
+        return [
+            Forms\Components\TextInput::make('name')
+                ->required()
+                ->maxLength(255),
+            Forms\Components\Textarea::make('notes')
+                ->maxLength(65535)
+                ->columnSpanFull(),
+        ];
+    }
+
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('notes')
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-            ]);
+            ->schema(self::getForm());
     }
 
     public static function table(Table $table): Table

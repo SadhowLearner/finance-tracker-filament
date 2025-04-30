@@ -8,6 +8,8 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 
 class TransactionWidget extends BaseWidget
 {
+    protected static ?int $sort = 1;
+
     protected function getStats(): array
     {
         $incomeTotal = Transaction::where('type', 'income')->sum('amount');
@@ -18,9 +20,9 @@ class TransactionWidget extends BaseWidget
 
         return [
             Stat::make('Total Income', number_format($incomeTotal, 0, ',', '.'))
-                ->description('Pendapatan Masuk')
+                ->description('Pemasukan')
                 ->descriptionIcon('heroicon-m-arrow-up-circle')
-                ->color('succes'),
+                ->color('success'),
             Stat::make('Total Expense', number_format($expenseTotal, 0, ',', '.'))
                 ->description('Pengeluaran')
                 ->descriptionIcon('heroicon-m-arrow-down-circle')
@@ -29,11 +31,6 @@ class TransactionWidget extends BaseWidget
                 ->description('Saldo')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color($balance >= 0 ? 'success' : 'danger'),
-            Stat::make('Total Transactions', Transaction::count())
-                ->description('Jumlah Transaksi')
-                ->descriptionIcon('heroicon-m-document-text')
-                ->color('primary'),
-            Stat::make('Last Transaction', Transaction::latest()->first()->created_at->diffForHumans() || 'You doesnt have a Transaction')
         ];
     }
 }

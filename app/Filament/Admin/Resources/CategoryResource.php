@@ -2,16 +2,22 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\CategoryResource\Pages;
-use App\Filament\Admin\Resources\CategoryResource\RelationManagers;
-use App\Models\Category;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Category;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Admin\Resources\CategoryResource\Pages;
+use App\Filament\Admin\Resources\CategoryResource\RelationManagers;
 
 class CategoryResource extends Resource
 {
@@ -22,16 +28,19 @@ class CategoryResource extends Resource
     public static function getForm(): array
     {
         return [
-            Forms\Components\TextInput::make('name')
+            Hidden::make('user_id')
+                ->required()
+                ->default(Auth::id()),
+            TextInput::make('name')
                 ->required()
                 ->maxLength(255),
-            Forms\Components\Select::make('type')
+            Select::make('type')
                 ->options([
                     'income' => 'Income',
                     'expense' => 'Expense',
                 ])
                 ->required(),
-            Forms\Components\Textarea::make('notes')
+            Textarea::make('notes')
                 ->maxLength(65535)
                 ->columnSpanFull(),
         ];
@@ -47,17 +56,18 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('notes')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('notes')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

@@ -3,11 +3,14 @@
 use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redirect;
+use App\Http\Controllers\WishlistPrintController;
 
 Route::get('/', function () {
     // return view('welcome');
     return Redirect::to('/admin/login');
 })->name('home');
+
+Route::get('wishlist/{wishlist}/print', [WishlistPrintController::class, 'print'])->name('wishlist.print');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

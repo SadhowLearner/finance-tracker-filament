@@ -48,10 +48,16 @@ class TransactionResource extends Resource
                 TextInput::make('description')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('amount')
+                TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('IDR'),
+                    ->prefix('IDR')
+                    ->afterStateUpdated(fn($state, $get, $set) => $set('total', $get('qty') * $state)),
+                TextInput::make('qty')
+                    ->default(1)
+                    ->numeric()
+                    ->minValue(1)
+                    ->afterStateUpdated(fn($state, $get, $set) => $set('total', $get('price') * $state)),
                 Select::make('type')
                     ->options([
                         'income' => 'Income',
@@ -72,7 +78,7 @@ class TransactionResource extends Resource
                     ->createOptionForm(
                         function (callable $get): array {
                             $newForm = CategoryResource::getForm();
-                            $newForm[1] =
+                            $newForm[2] =
                                 Hidden::make('type')
                                 ->default($get('type'));
 
@@ -99,6 +105,10 @@ class TransactionResource extends Resource
                     ->required()
                     ->searchable()
                     ->reactive(),
+                TextInput::make('total')
+                    ->default(fn($get) => $get('total'))
+                    ->columnSpanFull()
+                    ->prefix('Rp.'),
                 // Select::make('source_id')
                 //     ->relationship('source', 'name')
                 //     ->required(),
@@ -114,10 +124,12 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('amount')
-                    ->numeric()
+                TextColumn::make('price')
                     ->sortable()
                     ->money('IDR'),
+                TextColumn::make('qty')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('date')
                     ->date()
                     ->sortable(),

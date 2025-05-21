@@ -29,8 +29,8 @@ class CategoryResource extends Resource
     {
         return [
             Hidden::make('user_id')
-                ->required()
-                ->default(Auth::id()),
+                ->default(Auth::id())
+                ->required(),
             TextInput::make('name')
                 ->required()
                 ->maxLength(255),

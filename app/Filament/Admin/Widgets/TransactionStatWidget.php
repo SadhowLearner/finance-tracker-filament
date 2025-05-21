@@ -17,8 +17,8 @@ class TransactionStatWidget extends BaseWidget
                 ->description('Jumlah Transaksi')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('primary'),
-            Stat::make('Last Transaction', optional(Transaction::orderByDesc('date')->first())->amount
-                ? number_format(optional(Transaction::orderByDesc('date')->first())->amount, 0, ',', '.')
+            Stat::make('Last Transaction', optional(Transaction::orderByDesc('date')->first())->price * Transaction::orderByDesc('date')->first()->qty
+                ? number_format(optional(Transaction::orderByDesc('date')->first())->price * Transaction::orderByDesc('date')->first()->qty, 0, ',', '.')
                 : 'You doesnt have a Transaction')
                 ->description(optional(Transaction::orderByDesc('date')->first())->date)
                 ->descriptionIcon(optional(Transaction::orderByDesc('date')->first())->type == 'income' ? 'heroicon-m-arrow-up-circle' : 'heroicon-m-arrow-down-circle')

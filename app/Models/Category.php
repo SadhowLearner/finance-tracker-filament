@@ -9,10 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Category extends Model
 {
-    protected $fillable = [
-        'name',
-        'type',
-        'notes',
+    protected $guarded = [
+        'id'
     ];
     /**
      * Get all of the transaction for the Category

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->enum('type', ['income', 'expense']);
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->foreignId('user_id')->after('id')->default(1)->nullable()->constrained()->cascadeOnDelete();
         });
     }
 

@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Actions\Action;
 use App\Filament\Admin\Resources\CategoryResource;
+use Filament\Tables\Actions\Action as TableAction;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\WishlistResource\Pages;
 use App\Filament\Admin\Resources\WishlistResource\RelationManagers;
@@ -122,6 +123,7 @@ class WishlistResource extends Resource
                                     ->label('Print')
                                     ->icon('heroicon-o-printer')
                                     ->url(fn($record) => route('wishlist.print', $record))
+                                    ->hidden(fn($record) => $record === null)
                                     ->openUrlInNewTab(),
                             ]),
 
@@ -163,7 +165,14 @@ class WishlistResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort')
+            ->paginatedWhileReordering()
+            ->reorderRecordsTriggerAction(
+                fn(TableAction $action, bool $isReordering) => $action
+                    ->button()
+                    ->label($isReordering ? 'Disable reordering' : 'Enable reordering'),
+            );
     }
 
     public static function getRelations(): array

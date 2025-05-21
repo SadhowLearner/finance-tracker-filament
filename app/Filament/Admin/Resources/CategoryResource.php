@@ -86,7 +86,27 @@ class CategoryResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->paginated(false)
+            ->paginated([10, 25, 50, 100, 'all'])
+            ->defaultPaginationPageOption(25)
+            ->queryStringIdentifier('category')
+            ->extremePaginationLinks()
+            ->recordUrl(
+                fn(Category $record): string => route('filament.admin.resources.categories.edit', ['record' => $record]),
+            )
+            ->openRecordUrlInNewTab()
+            ->heading('CATEGORIES')
+            ->description('Manage your category here.')
+            ->poll('10s')
+            ->deferLoading()
+            ->striped()
+            // ->recordClasses(fn(Category $record) => match ($record->type) {
+            //     'income' => 'border-s-2 border-orange-600 dark:border-orange-300',
+            //     'expense' => 'border-s-2 border-green-600 dark:border-green-300',
+            //     default => null,
+            // })
+        ;
     }
 
     public static function getRelations(): array

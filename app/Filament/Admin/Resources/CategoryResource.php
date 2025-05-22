@@ -4,17 +4,23 @@ namespace App\Filament\Admin\Resources;
 
 use Filament\Forms;
 use Filament\Tables;
+use Filament\Forms\Get;
 use App\Models\Category;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\ColorColumn;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\ColorPicker;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\CategoryResource\Pages;
 use App\Filament\Admin\Resources\CategoryResource\RelationManagers;
@@ -43,6 +49,16 @@ class CategoryResource extends Resource
             Textarea::make('notes')
                 ->maxLength(65535)
                 ->columnSpanFull(),
+            Select::make('color')
+                ->options([
+                    'primary' => 'primary',
+                    'success' => 'success',
+                    'danger' => 'danger',
+                    'warning' => 'warning',
+                    'info' => 'info',
+                    'gray' => 'gray',
+                ])
+                ->required(),
         ];
     }
 
@@ -57,12 +73,38 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('type')
-                    ->searchable(),
+                    ->badge()
+                    ->searchable()
+                    ->color(fn($record) => $record->color),
+                IconColumn::make('type')
+                    ->icon(fn(string $state): string => match ($state) {
+                        'income' => 'heroicon-m-arrow-up-circle',
+                        'expense' => 'heroicon-m-arrow-down-circle',
+                    })
+                    ->color(fn(string $state): string => match ($state) {
+                        'income' => 'success',
+                        'expense' => 'danger',
+                    }),
                 TextColumn::make('notes')
                     ->searchable()
                     ->toggleable(),
+                ColorColumn::make('color')
+                    ->getStateUsing(fn($record) => match ($record->color) {
+                        'primary' => '#3B82F6',  // Blue
+                        'success' => '#10B981',  // Green
+                        'danger'  => '#EF4444',  // Red
+                        'warning' => '#F59E0B',  // Yellow
+                        'info'    => '#0EA5E9',  // Cyan
+                        'gray'    => '#6B7280',  // Gray
+                        default   => '#9CA3AF',  // Default Gray
+                    }),
+                TextColumn::make('notes')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('user.name')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -105,11 +147,11 @@ class CategoryResource extends Resource
             ->poll('10s')
             ->deferLoading()
             ->striped()
-            ->recordClasses(fn(Category $record) => match ($record->type) {
-                'income' => 'opacity-100',
-                'expense' => 'opacity-50',
-                default => null,
-            })
+            // ->recordClasses(fn(Category $record) => match ($record->type) {
+            //     'income' => 'opacity-100',
+            //     'expense' => 'opacity-50',
+            //     default => null,
+            // })
         ;
     }
 

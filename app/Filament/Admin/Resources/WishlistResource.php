@@ -5,11 +5,14 @@ namespace App\Filament\Admin\Resources;
 use Filament\Forms;
 use App\Models\User;
 use Filament\Tables;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use App\Models\Category;
 use App\Models\Wishlist;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Models\WishlistItem;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Grid;
 use Illuminate\Support\Facades\Auth;
@@ -21,10 +24,15 @@ use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ToggleColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Placeholder;
+use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Forms\Components\Actions\Action;
 use App\Filament\Admin\Resources\CategoryResource;
 use Filament\Tables\Actions\Action as TableAction;
@@ -32,6 +40,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\WishlistResource\Pages;
 use App\Filament\Admin\Resources\WishlistResource\RelationManagers;
 use App\Filament\Admin\Resources\WishlistResource\Pages\PrintWishlist;
+use App\Filament\Admin\Resources\WishlistResource\Pages\ViewWishlistItem;
+use App\Filament\Admin\Resources\WishlistResource\RelationManagers\WishlistItemRelationManager;
 
 class WishlistResource extends Resource
 {
@@ -50,8 +60,11 @@ class WishlistResource extends Resource
                             ->required()
                             ->default(Auth::id()),
                         Textarea::make('description'),
-
+                        FileUpload::make('image')
+                            ->imageEditor()
+                            ->circleCropper(),
                         Repeater::make('items')
+                            ->hiddenOn([ViewWishlistItem::class])
                             ->relationship()
                             ->label('Wishlist Items')
                             ->schema([
@@ -136,16 +149,26 @@ class WishlistResource extends Resource
     {
         return $table
             ->columns([
+                ImageColumn::make('image')
+                    ->circular(),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->description(fn($record) => Str::limit($record->description, 30, '...', true))
                     ->limit(20),
-                TextColumn::make('items_count')
-                    ->counts('items')
+                ViewColumn::make('items_count')
                     ->label('Total Items')
+                    ->view('filament.tables.columns.item_count')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
+                CheckboxColumn::make('achieved')
+                    ->afterStateUpdated(function (?string $state, $record) {
+                        if ($state) {
+                            WishlistItem::where('wishlist_id', $record->id)->update(['purchased' => (bool) $state]);
+                        } else {
+                            WishlistItem::where('wishlist_id', $record->id)->update(['purchased' => (bool) $state]);
+                        }
+                    }),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -177,14 +200,15 @@ class WishlistResource extends Resource
                     // ->link()
                     ->label($isReordering ? 'Disable reordering' : 'Enable reordering'),
             )
+            ->recordUrl(
+                fn(Wishlist $record): string => route('filament.admin.resources.wishlists.view', ['record' => $record]),
+            )
         ;
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -193,6 +217,7 @@ class WishlistResource extends Resource
             'index' => Pages\ListWishlists::route('/'),
             'create' => Pages\CreateWishlist::route('/create'),
             'edit' => Pages\EditWishlist::route('/{record}/edit'),
+            'view' => ViewWishlistItem::route('/{record}/view')
             // 'print' => Pages\PrintWishlist::route('/{record}/print'),
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Models\Transaction;
+use Illuminate\Support\Facades\DB;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 
@@ -12,9 +13,9 @@ class TransactionWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $incomeTotal = Transaction::where('type', 'income')->sum('amount');
+        $incomeTotal = Transaction::where('type', 'income')->sum(DB::raw('price * qty'));
 
-        $expenseTotal = Transaction::where('type', 'expense')->sum('amount');
+        $expenseTotal = Transaction::where('type', 'expense')->sum(DB::raw('price * qty'));
 
         $balance = $incomeTotal - $expenseTotal;
 

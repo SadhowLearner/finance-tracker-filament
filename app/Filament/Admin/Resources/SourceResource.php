@@ -14,6 +14,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\SourceResource\Pages;
 use App\Filament\Admin\Resources\SourceResource\RelationManagers;
@@ -49,7 +50,7 @@ class SourceResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                TextInputColumn::make('name')
                     ->searchable(),
                 TextColumn::make('notes')
                     ->searchable(),

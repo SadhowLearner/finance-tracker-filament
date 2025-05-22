@@ -18,8 +18,10 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -136,8 +138,14 @@ class TransactionResource extends Resource
                 TextColumn::make('description')
                     ->searchable(),
                 TextColumn::make('type')
-                    ->searchable(),
-                TextColumn::make('category.name')
+                    ->searchable()
+                    ->badge(),
+                SelectColumn::make('category_id')
+                    ->label('Category')
+                    ->options(
+                        fn($record) =>
+                        Category::where('type', $record->type)->pluck('name', 'id')
+                    )
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('source.name')

@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use Filament\Forms;
+use App\Models\User;
 use Filament\Tables;
 use App\Models\Category;
 use App\Models\Wishlist;
@@ -166,7 +167,8 @@ class WishlistResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->reorderable('sort')
+            // ->reorderable('sort')
+            ->reorderable('sort', fn(): bool => Auth::check() && Auth::user()->isAdmin())
             ->paginatedWhileReordering()
             ->reorderRecordsTriggerAction(
                 fn(TableAction $action, bool $isReordering) => $action

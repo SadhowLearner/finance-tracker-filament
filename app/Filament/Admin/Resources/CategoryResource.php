@@ -98,14 +98,17 @@ class CategoryResource extends Resource
             ->openRecordUrlInNewTab()
             ->heading('CATEGORIES')
             ->description('Manage your category here.')
+            // ->header(view('tables.header', [
+            //     'heading' => 'Clients',
+            // ]))
             ->poll('10s')
             ->deferLoading()
             ->striped()
-            // ->recordClasses(fn(Category $record) => match ($record->type) {
-            //     'income' => 'border-s-2 border-orange-600 dark:border-orange-300',
-            //     'expense' => 'border-s-2 border-green-600 dark:border-green-300',
-            //     default => null,
-            // })
+            ->recordClasses(fn(Category $record) => match ($record->type) {
+                'income' => 'opacity-100',
+                'expense' => 'opacity-50',
+                default => null,
+            })
         ;
     }
 

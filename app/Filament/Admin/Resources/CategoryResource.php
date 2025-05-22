@@ -87,8 +87,8 @@ class CategoryResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->paginated(false)
-            ->paginated([10, 25, 50, 100, 'all'])
+            // ->paginated(false)
+            ->paginated([8, 10, 25, 50, 100, 'all'])
             ->defaultPaginationPageOption(25)
             ->queryStringIdentifier('category')
             ->extremePaginationLinks()
@@ -98,8 +98,9 @@ class CategoryResource extends Resource
             ->openRecordUrlInNewTab()
             ->heading('CATEGORIES')
             ->description('Manage your category here.')
-            // ->header(view('tables.header', [
+            // ->header(view('test.header_test', [
             //     'heading' => 'Clients',
+            //     'description' => 'Manage your clients here.'
             // ]))
             ->poll('10s')
             ->deferLoading()

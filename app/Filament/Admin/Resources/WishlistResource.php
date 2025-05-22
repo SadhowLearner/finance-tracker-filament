@@ -170,11 +170,14 @@ class WishlistResource extends Resource
             // ->reorderable('sort')
             ->reorderable('sort', fn(): bool => Auth::check() && Auth::user()->isAdmin())
             ->paginatedWhileReordering()
+            // ->paginated([2])
             ->reorderRecordsTriggerAction(
                 fn(TableAction $action, bool $isReordering) => $action
                     ->button()
+                    // ->link()
                     ->label($isReordering ? 'Disable reordering' : 'Enable reordering'),
-            );
+            )
+        ;
     }
 
     public static function getRelations(): array

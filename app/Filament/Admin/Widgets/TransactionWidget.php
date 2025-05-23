@@ -20,11 +20,11 @@ class TransactionWidget extends BaseWidget
         $balance = $incomeTotal - $expenseTotal;
 
         return [
-            Stat::make('Total Income', number_format($incomeTotal, 0, ',', '.'))
+            Stat::make('Total Income', number_format($incomeTotal, 0, ',', '.') ?? "Belum ada pemasukan")
                 ->description('Pemasukan')
                 ->descriptionIcon('heroicon-m-arrow-up-circle')
                 ->color('success'),
-            Stat::make('Total Expense', number_format($expenseTotal, 0, ',', '.'))
+            Stat::make('Total Expense', number_format($expenseTotal, 0, ',', '.') ?? "Belum ada pengeluaran")
                 ->description('Pengeluaran')
                 ->descriptionIcon('heroicon-m-arrow-down-circle')
                 ->color('danger'),

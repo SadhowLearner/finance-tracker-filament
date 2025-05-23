@@ -24,8 +24,10 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\RestoreAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\ForceDeleteAction;
 use App\Filament\Admin\Resources\SourceResource;
 use App\Filament\Admin\Resources\CategoryResource;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -170,8 +172,26 @@ class TransactionResource extends Resource
                     ->relationship('category', 'name'),
                 SelectFilter::make('source')
                     ->relationship('source', 'name'),
+                Tables\Filters\TernaryFilter::make('trashed')
+                    ->nullable()
+                    ->baseQuery(fn(Builder $query) => $query->withoutGlobalScopes([
+                        SoftDeletingScope::class,
+                    ]))
+                    ->attribute('deleted_at')
+                    ->label('Deleted')
+                    ->placeholder('Not trashed transactions')
+                    ->trueLabel('All transactions')
+                    ->falseLabel('Trashed transactions')
+                    ->queries(
+                        true: fn(Builder $query) => $query,
+                        false: fn(Builder $query) => $query->whereNotNull('deleted_at'),
+                        blank: fn(Builder $query) => $query->whereNull('deleted_at'),
+                    ),
+                // Tables\Filters\TrashedFilter::make()
             ])
             ->actions([
+                ForceDeleteAction::make(),
+                RestoreAction::make(),
                 EditAction::make(),
                 ViewAction::make(),
             ])

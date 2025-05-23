@@ -2,23 +2,32 @@
 
 namespace App\Filament\Admin\Resources;
 
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Get;
 use App\Models\Category;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Models\Transaction;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Tables\Actions\Action;
+use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\ColorColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\ColorPicker;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -114,15 +123,90 @@ class CategoryResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('type')
-                    ->options([
-                        'income' => 'Income',
-                        'expense' => 'Expense',
-                    ]),
+            ->filters(
+                [
+                    Tables\Filters\Filter::make('notes')
+                        ->query(fn(Builder $query): Builder => $query->whereNotNull('notes'))
+                        ->label('Notes')
+                        ->translateLabel()
+                        ->toggle()
+                        ->default()
+                        ->indicator('Notes only'),
+                    Tables\Filters\SelectFilter::make('type')
+                        ->options([
+                            'income' => 'Income',
+                            'expense' => 'Expense',
+                        ])
+                        ->attribute('type')
+                        ->multiple()
+                        ->selectablePlaceholder(false),
+                    // ->default(['income', 'expense']),
+                    Tables\Filters\SelectFilter::make('transaction')
+                        ->relationship('transaction', 'description', fn(Builder $query) => $query->withTrashed())
+                        ->searchable()
+                        ->preload(),
+                    Tables\Filters\Filter::make('created_at')
+                        ->form([
+                            DatePicker::make('created_from'),
+                            DatePicker::make('created_until')
+                                ->default(now()),
+                        ])
+                        ->modifyFormFieldUsing(fn(Toggle $field) => $field->inline(false))
+                        ->indicateUsing(function (array $data): ?string {
+                            if (empty($data['created_from'] ?? null)) {
+                                return null;
+                            }
+                            return 'Created at ' . Carbon::parse($data['created_from'])->toFormattedDateString();
+                        })
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['created_from'] ?? null,
+                                    fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                )
+                                ->when(
+                                    $data['created_until'] ?? null,
+                                    fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                );
+                        })
+                ],
+                // layout: FiltersLayout::Modal
+                // layout: FiltersLayout::AboveContent
+                // layout: FiltersLayout::AboveContentCollapsible
+                // layout: FiltersLayout::BelowContent
+            )
+            ->persistFiltersInSession()
+            ->deferFilters()
+            ->filtersApplyAction(
+                fn(Action $action) => $action
+                    ->link()
+                    ->label('Save filters to table'),
+            )
+            ->deselectAllRecordsWhenFiltered(false)
+            ->filtersTriggerAction(
+                fn(Action $action) => $action
+                    ->button()
+                    ->label('Filter'),
+            )
+            ->filtersFormColumns(3)
+            ->filtersFormWidth(MaxWidth::FourExtraLarge)
+            ->filtersFormMaxHeight('400px')
+            // ->hiddenFilterIndicators()
+            ->filtersFormSchema(fn(array $filters): array => [
+                $filters['notes'],
+                Section::make('Visibility')
+                    ->description('These filters affect the visibility of the records in the table.')
+                    ->schema([
+                        $filters['type'],
+                        $filters['transaction'],
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+                $filters['created_at']
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ReplicateAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('wishlists', function (Blueprint $table) {
-            $table->integer('sort')->default(0)->after('description');
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->json('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('wishlists', function (Blueprint $table) {
-            $table->dropIfExists('sort');
-        });
+        Schema::dropIfExists('notifications');
     }
 };

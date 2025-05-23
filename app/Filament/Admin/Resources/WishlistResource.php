@@ -13,12 +13,15 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use App\Models\WishlistItem;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\ImportAction;
 use Filament\Forms\Components\Grid;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Repeater;
@@ -28,9 +31,14 @@ use Filament\Tables\Columns\ViewColumn;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
+use App\Filament\Exports\ProductExporter;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\QueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Exports\WishlistExporter;
+use App\Filament\Imports\WishlistImporter;
 use Filament\Forms\Components\Placeholder;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Forms\Components\Actions\Action;
@@ -39,9 +47,17 @@ use Filament\Tables\Actions\Action as TableAction;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\WishlistResource\Pages;
 use App\Filament\Admin\Resources\WishlistResource\RelationManagers;
+use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
 use App\Filament\Admin\Resources\WishlistResource\Pages\PrintWishlist;
+use Filament\Tables\Filters\QueryBuilder\Constraints\NumberConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\BooleanConstraint;
 use App\Filament\Admin\Resources\WishlistResource\Pages\ViewWishlistItem;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
 use App\Filament\Admin\Resources\WishlistResource\RelationManagers\WishlistItemRelationManager;
+use Filament\Tables\Filters\QueryBuilder\Constraints\BooleanConstraint\Operators\IsTrueOperator;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
 
 class WishlistResource extends Resource
 {
@@ -148,6 +164,12 @@ class WishlistResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->headerActions([
+                ImportAction::make()
+                    ->importer(WishlistImporter::class),
+                ExportAction::make()
+                    ->exporter(WishlistExporter::class)
+            ])
             ->columns([
                 ImageColumn::make('image')
                     ->circular(),
@@ -163,11 +185,7 @@ class WishlistResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
                 CheckboxColumn::make('achieved')
                     ->afterStateUpdated(function (?string $state, $record) {
-                        if ($state) {
-                            WishlistItem::where('wishlist_id', $record->id)->update(['purchased' => (bool) $state]);
-                        } else {
-                            WishlistItem::where('wishlist_id', $record->id)->update(['purchased' => (bool) $state]);
-                        }
+                        WishlistItem::where('wishlist_id', $record->id)->update(['purchased' => (bool) $state]);
                     }),
                 TextColumn::make('created_at')
                     ->dateTime()
@@ -180,10 +198,42 @@ class WishlistResource extends Resource
 
             ])
             ->filters([
-                //
+                QueryBuilder::make()
+                    ->constraints([
+                        TextConstraint::make('name'),
+                        TextConstraint::make('description'),
+                        DateConstraint::make('created_at'),
+                        DateConstraint::make('updated_at'),
+                        BooleanConstraint::make('achieved'),
+                        RelationshipConstraint::make('user')
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->multiple(),
+                            ),
+                        RelationshipConstraint::make('items')
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->multiple(),
+                            ),
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('pdf')
+                    ->label('PDF')
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(function (Wishlist $record) {
+                        return response()->streamDownload(function () use ($record) {
+                            echo Pdf::loadHtml(
+                                Blade::render('pdf', ['record' => $record])
+                            )->stream();
+                        }, $record->id . '.pdf');
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

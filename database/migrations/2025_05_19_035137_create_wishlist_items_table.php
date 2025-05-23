@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('wishlist_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->decimal('price', 12, 2)->nullable();
-            $table->integer('qty')->nullable();
+            $table->integer('qty')->nullable()->default(1);
             $table->boolean('purchased')->default(false);
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->timestamps();

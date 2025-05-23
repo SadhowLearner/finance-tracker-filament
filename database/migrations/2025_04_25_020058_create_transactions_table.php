@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('date');
             $table->string('description');
             $table->decimal('price', 12, 2);
-            $table->integer('qty');
+            $table->integer('qty')->default(1);
             $table->enum('type', ['income', 'expense']);
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->foreignId('source_id')->constrained()->cascadeOnDelete();

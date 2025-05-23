@@ -13,9 +13,9 @@ class TransactionWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $incomeTotal = Transaction::where('type', 'income')->sum(DB::raw('price * qty'));
+        $incomeTotal = Transaction::where('type', 'income')->sum(DB::raw('price * qty')) ?? "Belum ada pemasukan";
 
-        $expenseTotal = Transaction::where('type', 'expense')->sum(DB::raw('price * qty'));
+        $expenseTotal = Transaction::where('type', 'expense')->sum(DB::raw('price * qty')) ?? "Belum ada pengeluaran";
 
         $balance = $incomeTotal - $expenseTotal;
 
